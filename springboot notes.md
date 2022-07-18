@@ -75,6 +75,7 @@ TYPE_USE：使用的类型
   * 标签是放在类的成员变量上的，自动注入，**不需要set方法**，首先，它会去IOC容器里面找类型和添加注解的属性（对象的属性，成员变量等）一样的bean（所有向上转型能转成本类的都算，搞一个object类都能配上59个bean，离谱），如果找到一个，那么就注入成功。**如果找到多个，就查看有没有id（Map的key）和成员变量名一样的**，如果有，则注入成功，否则报异常
   * 名字、类型都很重要。最好名字和注解写的key一样，那就肯定能成功
   * 不管是单例、多例的作用范围，自动注入都会按照规则拿到对象进行注入的
+  * 有三种注入方式，构造函数、setter和属性注入。不推荐属性注入了已经。使用构造函数注入的时候，如果只有一个构造函数，可以省略autowired。由多个构造函数，容器会默认使用无参构造方法，加上autowired，容器就会去使用这个有参的构造了，也就可以注入了。setter建议加上autowired。优点就是解决执行顺序问题等
 
 * @Qualifier：
 
@@ -113,4 +114,16 @@ TYPE_USE：使用的类型
   new AnnotationConfigApplicationContext(SpringConfiguration.class);
   ```
 
-## 
+* @ServletComponentScan
+  * SpringBootApplication 上使用@ServletComponentScan 注解后
+    Servlet可以直接通过@WebServlet注解自动注册
+    Filter可以直接通过@WebFilter注解自动注册
+    Listener可以直接通过@WebListener 注解自动注册
+  * 不使用这个注解，其他的requestMapping也能正常使用，就是单纯的上面几种不能使用
+
+* @Mapper
+  * 在接口类上添加了@Mapper，在编译之后会生成相应的接口实现类，并将实现类生成对象交给spring容器
+  * 添加位置：接口类上面
+* @MapperScan
+  * 指定要变成实现类的接口所在的包，包下面的所有接口在编译之后都会生成相应的实现类，并将实现类生成对象交给spring容器
+  * 添加位置：是在Springboot启动类上面添加，

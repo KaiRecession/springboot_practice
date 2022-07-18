@@ -15,6 +15,7 @@ public class Demo01Application {
         ApplicationContext run = SpringApplication.run(Demo01Application.class, args);
         Dog dog = run.getBean("hao", Dog.class);
         Animal animal = run.getBean("animal", Animal.class);
+        System.out.println(animal.getCat());
         person person = run.getBean("person", person.class);
         System.out.println(person);
         System.out.println(dog);

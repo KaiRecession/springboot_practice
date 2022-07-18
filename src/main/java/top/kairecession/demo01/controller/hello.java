@@ -10,15 +10,23 @@ import top.kairecession.demo01.StudentMapper;
 
 @Controller
 public class hello {
-    @Autowired
+
     StudentMapper studentMapper;
 
-    public hello() {
+    public hello(StudentMapper studentMapper) {
+        this.studentMapper = studentMapper;
     }
+
 
     @RequestMapping({"/hello"})
     @ResponseBody
     public List<Hobby> hello() {
         return this.studentMapper.gets(1);
+    }
+
+    @RequestMapping({"/hello1"})
+    @ResponseBody
+    public String hello1() {
+        return "this.studentMapper.gets(1)";
     }
 }
