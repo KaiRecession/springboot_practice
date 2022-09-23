@@ -1,11 +1,17 @@
 package top.kairecession.demo01;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+@ApiModel("演员类")
 public class actor implements Serializable {
+    @ApiModelProperty("演员id")
     private int actor_id;
+    @ApiModelProperty("演员姓")
     private String first_name;
     private String last_name;
     private Date last_update;

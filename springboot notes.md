@@ -127,3 +127,116 @@ TYPE_USE：使用的类型
 * @MapperScan
   * 指定要变成实现类的接口所在的包，包下面的所有接口在编译之后都会生成相应的实现类，并将实现类生成对象交给spring容器
   * 添加位置：是在Springboot启动类上面添加，
+
+* @ComponentScan
+
+  * 扫描指定包下注释过的容器对象放入
+  * 没指定的就不放
+
+* @Configuration
+
+  * 用于定义配置类，可替换XML配置文件，被注解的类内部包含一个或多个`@Bean`注解方法。可以被`AnnotationConfigApplicationContext`或者`AnnotationConfigWebApplicationContext` 进行扫描。这两个类应该是启动时专门用来扫描配置的
+  * Configuration的那个类也会被放入容器被特殊的配置类扫描到
+
+
+### slf4j
+
+SLF4J，即简单日志门面（Simple Logging Facade for Java），不是具体的日志解决方案，它只服务于各种各样的日志系统。按照官方的说法，SLF4J是一个用于日志系统的简单Facade，允许最终用户在部署其应用时使用其所希望的日志系统。**你只需要按统一的方式写记录日志的代码，而无需关心日志是通过哪个日志系统，以什么风格输出的。因为它们取决于部署项目时绑定的日志系统。**
+
+SpringBoot中集成了slf4j
+
+这里指定的是日志配置文件是**根路径下**的 `logback.xml` 文件
+
+通过配置文件可以把日志信息存储到文件中而不是控制台上，同时也能按天按文件单个大小去记录日志，更方便定位日志。
+
+还可以配置日志的输出级别，RACE > DEBUG > INFO > WARN > ERROR，越大越全面
+
+#### 获取配置文件的键值对
+
+1、@Value("${url.orderUrl}")直接注入，注解加载成员变量上
+
+2、@ConfigurationProperties(prefix = "url") + @Component，注解加在类上面，使用这个注解需要先倒入依赖
+
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-configuration-processor</artifactId>
+	<optional>true</optional>
+</dependency>
+
+```
+
+使用的时候注入该对象就行
+
+### SpringMVC的常用注解
+
+**@ResponseBody**
+
+将返回信息转换为json字符串
+
+**@RestController**
+
+ `@RestController` 注解包含了原来的 `@Controller` 和 `@ResponseBody` 注解，两者的组合而已
+
+**@RequestMapping**
+
+用来处理请求地址映射的注解，它可以用于类上，也可以用于方法上。在类的级别上的注解会将一个特定请求或者请求模式映射到一个控制器之上，表示类中的所有响应请求的方法都是以该地址作为父路径；在方法的级别表示进一步指定到处理方法的映射关系。
+
+注解有6个属性，一般在项目中比较常用的有三个属性：value、method 和 produces
+
+**@PathVariable**
+
+这个是用来解析url里面的字段的，可以同时解析多个字段，记得设置好占位符
+
+**@RequestParam**
+
+@PathValiable 是从 url 模板中获取参数值， 即这种风格的 url：http://localhost:8080/user/{id} 
+
+而 @RequestParam 是从 request 里面获取参数值，即这种风格的 url：http://localhost:8080/user?id=1 除了 value 属性外，还有个两个属性比较常用：
+
+- required 属性：true 表示该参数必须要传，否则就会报 404 错误，false 表示可有可无。
+- defaultValue 属性：默认值，表示如果请求中没有同名参数（就是方法括号里面的参数名字）时，就用这个作为参数的默认值。
+
+不设置method的时候request和post方法都行
+
+**@PostMapping**
+
+@PostMapping就等于@RequestMapping(method = RequestMethod.POST).
+
+**@RequestBody**
+
+`@RequestBody` 注解用于接收前端传来的实体，接收参数也是对应的实体，比如前端通过 json 提交传来两个参数 username 和 password，此时我们需要在后端封装一个实体来接收。就是把参数封装到类里面。
+
+只接受json格式的数据
+
+# Swagger
+
+Swageer与fastjson冲突，找不到解决办法，不使用fastjson
+
+@ApiModel("user类)
+
+@ApiModelProperty(value = "USER的id")
+
+这两个标签方便用来描述javabean类
+
+![截屏2022-09-23 14.44.48](img/%E6%88%AA%E5%B1%8F2022-09-23%2014.44.48.png)
+
+@Api(tags = "我是test",description = "test的描述")
+
+![截屏2022-09-23 15.00.28](img/%E6%88%AA%E5%B1%8F2022-09-23%2015.00.28.png)
+
+@ApiOperation(value = "根据用户唯一标识获取用户信息")
+
+Api用来描述一个大类，这个用来描述一个具体的url
+
+![截屏2022-09-23 15.01.45](img/%E6%88%AA%E5%B1%8F2022-09-23%2015.01.45.png)
+
+@ApiParam("性别") String gender
+
+用来描述参数
+
+![截屏2022-09-23 15.08.06](img/%E6%88%AA%E5%B1%8F2022-09-23%2015.08.06.png)
+
+![20200215044256579](img/20200215044256579.png)
+
+在@RequestMapping(value = "/hello2/{id}/{name}",method = RequestMethod.GET)指定来method后，swagger文档中就不会列举出所有的方法，只会列举出指定的get方法

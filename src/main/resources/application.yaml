@@ -1,3 +1,14 @@
 server:
-  port: 9007
+  port: 8080
+Logging:
+  config: logback.xml
+  level:
+    top.kairecession.demo01: trace
+
+
+
+
+
+
+
 
