@@ -240,3 +240,97 @@ Api用来描述一个大类，这个用来描述一个具体的url
 ![20200215044256579](img/20200215044256579.png)
 
 在@RequestMapping(value = "/hello2/{id}/{name}",method = RequestMethod.GET)指定来method后，swagger文档中就不会列举出所有的方法，只会列举出指定的get方法
+
+# Thymeleaf
+
+关闭缓存，否则页面无法及时更新
+
+之前在 Controller 层上都是使用的 @RestController 注解，自动会把返回的数据转成 json 格式。但是在使用模板引擎时，Controller 层就不能用 @RestController 注解了，因为在使用 thymeleaf 模板时，**返回的是视图文件名**，比如上面的 Controller 中是返回到 **index.html** 页面，**如果使用 @RestController 的话，会把 index 当作 String 解析了，直接返回到页面了**，而不是去找 index.html 页面，大家可以试一下。所以在使用模板时要用 @Controller 注解。
+
+使用 `th:value="*{属性名}"`
+使用 `th:value="${对象.属性名}"`，对象指的是上面使用 `th:object` 获取的对象
+使用 `th:value="${对象.get方法}"`，对象指的是上面使用 `th:object` 获取的对象
+
+也能遍历数组、集合对象放入html的页面
+
+# Spring Boot全局异常处理
+
+各个代码流程中可能会发生一场，如果对每个过程都单独作异常处理，**那系统的代码耦合度会变得很高**，此外，开发工作量也会加大而且不好统一，这也增加了代码的维护成本。
+针对这种实际情况，我们需要**将所有类型的异常处理从各处理过程解耦出来**，这样既保证了相关处理过程的功能单一，也实现了异常信息的统一处理和维护。同时，我们也不希望直接把异常抛给用户，应该对异常进行处理，**对错误信息进行封装，然后返回一个友好的信息给用户**。
+使用 `@ControllerAdvice` 注解，`@ResponseBody` 注解是为了异常处理完之后给调用方输出一个 json 格式的封装数据。通过 `@ExceptionHandler` 注解来指定具体的异常，然后在方法中处理该异常信息，最后将结果通过统一的 json 结构体返回给调用者。
+
+发生了16:04:41.128 [http-nio-8080-exec-1] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.http.converter.HttpMessageNotWritableException: No converter for [class top.kairecession.demo01.error.JsonResult] with preset Content-Type 'null']
+
+检查是否生成了java bean的set和get方法
+
+```
+@ExceptionHandler(MissingServletRequestParameterException.class) 括号中接受要处理的异常类型
+@ResponseStatus(value = HttpStatus.BAD_REQUEST) 返回的异常类型，不加这个也行，会在浏览器看到这个status的状态码
+public 返回 函数名(MissingServletRequestParameterException ex) 括号写接受的异常类
+```
+
+甚至可以直接处理一个大Excption，和throw一样
+
+![截屏2022-09-27 16.24.31](img/%E6%88%AA%E5%B1%8F2022-09-27%2016.24.31.png)
+
+# AOP（spect Oriented Programming） 面向切面编程
+
+达到一种可配置的、可插拔的程序结构
+
+1、引入AOP的依赖
+
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+
+0.@Aspect 定义一个切面类，是在类上面，同时这个类要交给spring容器中
+
+切面：剖解开封装的对象内部，并将那些**影响了多个类的公共行为封装到一个可重用模块**，并将其名为“Aspect”，即方面。所谓“方面”，简单地说，就是将那些与业务无关，却为业务模块所共同调用的逻辑或责任封装起来，便于**减少系统的重复代码，降低模块间的耦合度**，并有利于未来的可操作性和可维护性。
+
+1.@Pointcut：定义一个切面，即上面所描述的关注的某件事入口。这个注解加在空方法上，主要是为了把execution表达式抽取出来，让@Before等不用重复写同一个execution。本来@Before里面要写execution的，这时只用写Pointcut注解后的那个方法名就行了，两个都被vaule属性接受。也叫切入点，在execution描述的方法中切入。**Pointcut要和Before在同一个类中**
+
+2.@Before：在做某件事之前做的事。也叫连接点（joinpoint），这个时候连接点在事情执行的前面
+
+3.@After：在做某件事之后做的事。连接点在后面，以此类推
+
+4.@AfterReturning：在做某件事之后，对其返回值做增强处理。
+
+```
+// returning中的名字要和方法中的一致
+// resut是未经转化的原方法return结果
+// 直接修改result就可以
+```
+
+5.@AfterThrowing：在做某件事抛出异常时，处理。
+
+# Mybatis
+
+倒入依赖
+
+<dependency>
+	<groupId>org.mybatis.spring.boot</groupId>
+	<artifactId>mybatis-spring-boot-starter</artifactId>
+	<version>1.3.2</version>
+</dependency>
+<dependency>
+	<groupId>mysql</groupId>
+	<artifactId>mysql-connector-java</artifactId>
+	<scope>runtime</scope>
+</dependency>
+
+使用@Mapper注解直接一个接口就可以实现查询。原理：Mybatis会根据sqlSession创建一个Mapper的代理类，生成一个真实的对象
+
+**使用MapperScan后，Mapper失效**
+
+封装成类的时候，有可能double类型的属性接受到了数据库的记录为null，这时候就转换就有异常。建议修改查询语句
+
+```
+@Results({@Result(property = "classes", column = "class")})
+```
+
+加在方法上，将数据库查询结果的字段对应到对象中，输入是查询结果
+
+@Param("id") Long id
+
+加在方法的行参前，将对象中的属性拿出来对应到查询参数上去，输入是对象

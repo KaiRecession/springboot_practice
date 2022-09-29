@@ -4,6 +4,9 @@ Logging:
   config: logback.xml
   level:
     top.kairecession.demo01: trace
+spring:
+  thymeleaf:
+    cache: false #关闭缓存
 
 
 
