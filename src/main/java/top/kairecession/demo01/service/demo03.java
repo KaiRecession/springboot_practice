@@ -2,6 +2,7 @@ package top.kairecession.demo01.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import top.kairecession.demo01.User;
 import top.kairecession.demo01.dao.UserMapper;
 
@@ -14,5 +15,11 @@ public class demo03 {
 
     public List<User> getAll() {
         return userMapper.getUser();
+    }
+
+    @Transactional
+    public void isertUser(User user) {
+        userMapper.insertUser(user);
+        throw new RuntimeException();
     }
 }

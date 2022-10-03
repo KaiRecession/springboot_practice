@@ -203,6 +203,10 @@ SpringBoot中集成了slf4j
 
 @PostMapping就等于@RequestMapping(method = RequestMethod.POST).
 
+**@GetMapping**
+
+和上面的相同，方法就是RequestMethod.Get
+
 **@RequestBody**
 
 `@RequestBody` 注解用于接收前端传来的实体，接收参数也是对应的实体，比如前端通过 json 提交传来两个参数 username 和 password，此时我们需要在后端封装一个实体来接收。就是把参数封装到类里面。
@@ -334,3 +338,74 @@ public 返回 函数名(MissingServletRequestParameterException ex) 括号写接
 @Param("id") Long id
 
 加在方法的行参前，将对象中的属性拿出来对应到查询参数上去，输入是对象
+
+也可以直接传入一个对象，使用#{对象属性}
+
+## 事务的使用
+
+```
+@Transactional
+public void isertUser(User user) {
+    userMapper.insertUser(user);
+    throw new RuntimeException();
+}
+```
+
+方法里面的语句都会算作事务的内容，只需要加上注解，放在service层里面
+
+### 使用事务的注意事项
+
+异常没有捕获到
+
+手动抛出一个 SQLException 来模拟实际中操作数据库发生的异常，在这个方法中，既然抛出了异常，那么事务应该回滚，实际却不如此。 Spring Boot 默认的事务规则是遇到**运行异常（RuntimeException）和程序错误（Error）才会回滚**。比如上面我们的例子中抛出的 RuntimeException 就没有问题，但是抛出 SQLException 就无法回滚了。针对非运行时异常，如果要进行事务回滚的话，可以在 @Transactional 注解中使用 rollbackFor 属性来指定异常，比如 @Transactional(rollbackFor = Exception.class)，这样就没有问题了，所以在实际项目中，一定要指定异常。
+
+
+异常被吃掉
+
+异常被 try catch 掉，在异常出现的地方给处理掉。就因为有这中 try…catch，所以导致异常被 ”吃“ 掉，事务无法回滚。**直接往上抛，给上一层来处理即可，千万不要在事务中把异常自己 ”吃“ 掉。**
+
+事务的范围
+
+在Service方法中加入了synchronized关键字，但是 synchronized 没有起作用，其实根本原因是因为**事务的范围比锁的范围大**。也就是说，在加锁的那部分代码执行完之后，锁释放掉了，但是事务还没结束，此时另一个线程进来了，事务没结束的话，第二个线程进来时，数据库的状态和第一个线程刚进来是一样的。即由于mysql Innodb引擎的默认隔离级别是可重复读（在同一个事务里，SELECT的结果是事务开始时时间点的状态），线程二事务开始的时候，线程一还没提交完成，导致读取的数据还没更新。第二个线程也做了插入动作，导致了脏数据
+
+# 监听器
+
+帮助开发者**监听 web 中特定的事件**，比如 ServletContext, HttpSession, ServletRequest 的**创建和销毁**；变量的**创建、销毁和修改**等。可以在某些动作前后增加处理，实现监控。并不是一直处于监控状态，只是在特定的事件发生时触发
+
+### 监听Servlet上下文对象
+
+监听容器的各个事件，ContextRefreshedEvent 事件会在Spring容器初始化完成会触发该事件
+
+1、继承该事件的监听接口
+
+2、重写方法
+
+### 监听HTTP会话 Session对象
+
+看代码
+
+### 自定义事件
+
+就是写了方法1，方法1调用监听方法1的方法2 。不就是两个方法套用，可以选择监听器的使用或者不使用
+
+# 拦截器
+
+拦截器的原理很简单，**是 AOP 的一种实现**，专门拦截对动态资源的后台请求，即拦截对控制层的请求。
+
+### 定义拦截器
+
+只需要实现 `HandlerInterceptor` 接口
+
+preHandle(……) 方法：该方法的执行时机是，当某个 url 已经匹配到对应的 Controller 中的某个方法，且在这个方法执行之前。所以 preHandle(……) 方法可以决定是否将请求放行，这是通过返回值来决定的，返回 true 则放行，返回 false 则不会向后执行。
+postHandle(……) 方法：该方法的执行时机是，当某个 url 已经匹配到对应的 Controller 中的某个方法，且在执行完了该方法，但是在 DispatcherServlet 视图渲染之前。所以在这个方法中有个 ModelAndView 参数，可以在此做一些修改动作。
+afterCompletion(……) 方法：顾名思义，该方法是在整个请求处理完成后（包括视图渲染）执行，这时做一些资源的清理工作，这个方法只有在 preHandle(……) 被成功执行后并且返回 true 才会被执行。
+
+### 配置拦截器
+
+继承WebMvcConfigurationSupport 类方法进行配置
+
+WebMvcConfigurationSupport 会导致默认的静态资源被拦截，这就需要我们手动将静态资源放开。
+
+另一种方法：
+
+直接实现 WebMvcConfigurer 接口，然后重写 `addInterceptors` 方法，将自定义的拦截器添加进去即可。**实现 WebMvcConfigure 接口的话，不会拦截 Spring Boot 默认的静态资源**。
